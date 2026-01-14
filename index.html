@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>NoteSphere</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <!--
+    Minimal layout:
+    - Header: brand + theme toggle
+    - Main: search + subject cards
+    - Footer: small hint
+  -->
+
+  <header class="app-header">
+    <a class="brand" href="./index.html" aria-label="Go to home">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__text">NoteSphere</span>
+    </a>
+
+    <div class="header-actions">
+      <button id="exportData" class="btn btn--ghost" type="button" aria-label="Export NoteSphere data">
+        <span class="btn__icon" aria-hidden="true">⤓</span>
+        <span class="btn__text">Export</span>
+      </button>
+
+      <button id="importData" class="btn btn--ghost" type="button" aria-label="Import NoteSphere data">
+        <span class="btn__icon" aria-hidden="true">⤒</span>
+        <span class="btn__text">Import</span>
+      </button>
+      <input id="importFile" type="file" accept="application/json" hidden />
+
+      <button id="themeToggle" class="btn btn--ghost" type="button" aria-label="Toggle theme">
+        <span class="btn__icon" aria-hidden="true">◐</span>
+        <span class="btn__text">Theme</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1 class="hero__title">Notes, organized by subject.</h1>
+      <p class="hero__subtitle">Fast to browse. Easy to extend.</p>
+
+      <div class="search">
+        <label class="sr-only" for="globalSearch">Search notes</label>
+        <input id="globalSearch" class="search__input" type="search" placeholder="Search all notes (e.g., 'pointer', 'entropy', 'process')" autocomplete="off" />
+      </div>
+
+      <div id="searchResults" class="results" aria-live="polite" hidden></div>
+    </section>
+
+    <section class="section">
+      <div class="section__header">
+        <div>
+          <h2 class="section__title">Subjects</h2>
+          <p class="section__hint">Click a subject to open its notes.</p>
+        </div>
+
+        <!--
+          Add Subject (stored in browser localStorage)
+          Note: A static website cannot write to data/notes.json on your disk.
+        -->
+        <form id="subjectForm" class="mini-form" aria-label="Add a subject">
+          <label class="sr-only" for="subjectTitleInput">Subject title</label>
+          <input id="subjectTitleInput" class="mini-form__input" type="text" placeholder="Add subject (e.g., DBMS)" required />
+          <button class="btn" type="submit">Add</button>
+        </form>
+      </div>
+
+      <div id="subjectGrid" class="grid" aria-label="Subject cards"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span class="muted">Tip: Add more subjects by editing <code>data/notes.json</code>.</span>
+  </footer>
+
+  <!-- Fallback data for file:// mode (no server). When served over HTTP, the app prefers notes.json. -->
+  <script src="data/notes-data.js"></script>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>

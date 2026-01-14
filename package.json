@@ -1,0 +1,10 @@
+{
+  "name": "personal-notes-website",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Personal notes website with a minimal Node.js backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

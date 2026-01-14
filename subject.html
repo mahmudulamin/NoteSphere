@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Subject • NoteSphere</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <!--
+    Subject page:
+    - Back link
+    - Subject title
+    - Search within subject
+    - Notes list rendered from JSON blocks
+  -->
+
+  <header class="app-header">
+    <a class="brand" href="./index.html" aria-label="Back to home">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__text">NoteSphere</span>
+    </a>
+
+    <div class="header-actions">
+      <a class="btn btn--ghost" href="./index.html">
+        <span class="btn__icon" aria-hidden="true">←</span>
+        <span class="btn__text">Home</span>
+      </a>
+      <button id="themeToggle" class="btn btn--ghost" type="button" aria-label="Toggle theme">
+        <span class="btn__icon" aria-hidden="true">◐</span>
+        <span class="btn__text">Theme</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section">
+      <div class="section__header">
+        <div>
+          <h1 id="subjectTitle" class="page-title">Subject</h1>
+          <p id="subjectMeta" class="muted">Loading…</p>
+        </div>
+
+        <div class="search search--compact">
+          <label class="sr-only" for="subjectSearch">Search within this subject</label>
+          <input id="subjectSearch" class="search__input" type="search" placeholder="Search within this subject" autocomplete="off" />
+        </div>
+      </div>
+
+      <!--
+        Add Note (stored in browser localStorage)
+        Note: A static website cannot write to data/notes.json on your disk.
+      -->
+      <section class="editor" aria-label="Add a note">
+        <h2 class="editor__title">Add a note</h2>
+        <p class="muted editor__hint">Saved on this device/browser only.</p>
+
+        <form id="noteForm" class="editor__form">
+          <label class="editor__label" for="noteTitle">Title</label>
+          <input id="noteTitle" class="editor__input" type="text" placeholder="e.g., Virtual Memory" required />
+
+          <label class="editor__label" for="noteContent">Content</label>
+          <textarea id="noteContent" class="editor__textarea" rows="8" placeholder="Write notes using simple formatting:\n\n# Heading\n- bullet\n1. numbered\n\n```cpp\nint x = 1;\n```" required></textarea>
+
+          <div class="editor__actions">
+            <button class="btn" type="submit">Save Note</button>
+            <button id="cancelEdit" class="btn btn--ghost" type="button" hidden>Cancel</button>
+            <button id="downloadMyNotes" class="btn btn--ghost" type="button">Download Notes</button>
+          </div>
+        </form>
+      </section>
+
+      <div id="notesContainer" class="notes" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <!-- Fallback data for file:// mode (no server). When served over HTTP, the app prefers notes.json. -->
+  <script src="data/notes-data.js"></script>
+  <script src="assets/js/subject.js" defer></script>
+</body>
+</html>

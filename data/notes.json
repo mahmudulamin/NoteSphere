@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "subjects": {
+    "physics": {
+      "slug": "physics",
+      "title": "Physics",
+      "notes": [
+        {
+          "id": "phy-kinematics",
+          "title": "Kinematics: Core Equations",
+          "blocks": [
+            { "type": "paragraph", "text": "Use these when acceleration is constant." },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "v = u + at",
+                "s = ut + 1/2 at^2",
+                "v^2 = u^2 + 2as",
+                "s = (u + v)/2 · t"
+              ]
+            },
+            { "type": "heading", "text": "Quick Tips" },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Choose sign convention first (e.g., up positive).",
+                "Convert units: km/h → m/s by dividing by 3.6.",
+                "Draw a simple diagram before plugging values."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "phy-thermo-first-law",
+          "title": "Thermodynamics: First Law",
+          "blocks": [
+            { "type": "paragraph", "text": "Energy conservation for thermodynamic systems." },
+            { "type": "heading", "text": "Statement" },
+            { "type": "paragraph", "text": "ΔU = Q − W (work done by the system)." },
+            { "type": "heading", "text": "Common Pitfall" },
+            { "type": "quote", "text": "Sign conventions vary by book; always confirm whether W is done by or on the system." }
+          ]
+        }
+      ]
+    },
+    "mathematics": {
+      "slug": "mathematics",
+      "title": "Mathematics",
+      "notes": [
+        {
+          "id": "math-derivatives",
+          "title": "Derivatives: Basic Rules",
+          "blocks": [
+            { "type": "paragraph", "text": "These rules speed up differentiation." },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "d/dx (x^n) = n·x^(n−1)",
+                "d/dx (sin x) = cos x",
+                "d/dx (cos x) = −sin x",
+                "Product rule: (fg)' = f'g + fg'",
+                "Chain rule: (f(g(x)))' = f'(g(x))·g'(x)"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "math-series-geometric",
+          "title": "Geometric Series",
+          "blocks": [
+            { "type": "paragraph", "text": "For |r| < 1, the infinite geometric series converges." },
+            { "type": "heading", "text": "Formula" },
+            { "type": "paragraph", "text": "1 + r + r^2 + … = 1/(1−r)" },
+            { "type": "heading", "text": "Example" },
+            { "type": "paragraph", "text": "r = 1/2 ⇒ sum = 2" }
+          ]
+        }
+      ]
+    },
+    "cpp": {
+      "slug": "cpp",
+      "title": "C++",
+      "notes": [
+        {
+          "id": "cpp-const-ref",
+          "title": "Pass by const reference",
+          "blocks": [
+            { "type": "paragraph", "text": "Use const references to avoid copies for large objects." },
+            {
+              "type": "code",
+              "language": "cpp",
+              "code": "#include <string>\n\nvoid printName(const std::string& name) {\n    // No copy; cannot modify name\n}\n"
+            },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Good for std::string, vectors, and structs.",
+                "Prefer pass-by-value for small trivially copyable types (int, double)."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cpp-pointers",
+          "title": "Pointers vs References (quick)",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "References must be initialized; pointers can be null.",
+                "Pointers can be reassigned; references typically cannot.",
+                "Use smart pointers (std::unique_ptr / std::shared_ptr) for ownership." 
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "java": {
+      "slug": "java",
+      "title": "Java",
+      "notes": [
+        {
+          "id": "java-oop",
+          "title": "OOP: Interface vs Abstract Class",
+          "blocks": [
+            { "type": "paragraph", "text": "Both provide abstraction, but they solve slightly different problems." },
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Interface: defines a contract; a class can implement multiple interfaces.",
+                "Abstract class: can store state and shared implementation; single inheritance only.",
+                "Use interface for capabilities; abstract class for shared base behavior." 
+              ]
+            }
+          ]
+        },
+        {
+          "id": "java-hashmap",
+          "title": "HashMap: common operations",
+          "blocks": [
+            {
+              "type": "code",
+              "language": "java",
+              "code": "import java.util.*;\n\nMap<String, Integer> freq = new HashMap<>();\nfreq.put(\"a\", 1);\nfreq.putIfAbsent(\"b\", 0);\nfreq.merge(\"a\", 1, Integer::sum);\n"
+            },
+            { "type": "paragraph", "text": "Tip: merge(...) is great for frequency counting." }
+          ]
+        }
+      ]
+    },
+    "operating-systems": {
+      "slug": "operating-systems",
+      "title": "Operating Systems",
+      "notes": [
+        {
+          "id": "os-process-vs-thread",
+          "title": "Process vs Thread",
+          "blocks": [
+            {
+              "type": "list",
+              "ordered": false,
+              "items": [
+                "Process: independent address space; heavier context switch.",
+                "Thread: shares process memory; cheaper context switch.",
+                "Threads need synchronization (locks, semaphores) to avoid races."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "os-deadlock",
+          "title": "Deadlock: Coffman conditions",
+          "blocks": [
+            { "type": "paragraph", "text": "Deadlock can happen only if all four hold." },
+            {
+              "type": "list",
+              "ordered": true,
+              "items": [
+                "Mutual exclusion",
+                "Hold and wait",
+                "No preemption",
+                "Circular wait"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
