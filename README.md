@@ -11,6 +11,58 @@ A clean, responsive notes site (NoteSphere) that loads subjects/notes from a loc
 - `assets/js/subject.js` – Subject page logic
 - `data/notes.json` – Notes data (add subjects/notes here)
 
+## Features
+
+### 🎨 Beautiful UI/UX
+
+- **Modern Design** - Clean, minimal interface with smooth animations
+- **Dark/Light Theme** - Auto-detects system preference, manually toggleable
+- **Responsive Layout** - Works on desktop, tablet, and mobile
+- **Custom Favicon** - Branded icon for browser tabs
+- **Smooth Animations** - Elegant page transitions and interactions
+
+### 📝 Note Management
+
+- **Rich Text Support** - Headings, lists, code blocks, quotes
+- **Subject Organization** - Group notes by subjects/topics
+- **Full-text Search** - Global search across all notes + per-subject search
+- **Note Sorting** - Sort by title (A-Z, Z-A)
+- **Copy Note Link** - Share direct links to specific notes
+- **Note Statistics** - Real-time word count and character count while editing
+- **Edit/Delete** - Full CRUD operations on notes
+
+### 🔐 Authentication & Security
+
+- **Login/Logout** - Session-based authentication
+- **Protected Routes** - Secure access to notes and data
+- **Configurable Credentials** - Set username/password via environment variables
+- **Session Management** - 7-day session expiry
+
+### ⌨️ Keyboard Shortcuts
+
+- **Ctrl/⌘ + K** - Focus search bar
+- **Escape** - Clear search or close modals
+- **Ctrl/⌘ + /** - Show keyboard shortcuts help
+
+### 💾 Data Management
+
+- **Import/Export** - Backup and restore your notes as JSON
+- **localStorage Fallback** - Works offline without backend
+- **Backend Persistence** - Save notes to disk when using Node.js server
+
+### 📢 User Feedback
+
+- **Toast Notifications** - Beautiful success/error messages (no more alert boxes!)
+- **Loading States** - Visual feedback during operations
+- **Empty States** - Friendly messages when no content exists
+- **Confirm Dialogs** - Styled confirmation modals
+
+### 🎯 Developer Experience
+
+- **No Build Step** - Pure HTML/CSS/JS, works immediately
+- **Well-documented** - Clear code comments and README
+- **Modular Architecture** - Easy to extend and customize
+
 ## Run locally (recommended)
 
 Because modern browsers often block `fetch()` when opening files via `file://`, use a local server.

@@ -86,7 +86,7 @@
       if (!res.ok) {
         const payload = await res.json().catch(() => null);
         const msg = payload?.error || `Login failed (HTTP ${res.status})`;
-        showError(msg);
+        showToast(msg, 'error');
         // Clear password field on failed login
         if (passwordEl) passwordEl.value = '';
         if (passwordEl) passwordEl.focus();
@@ -98,9 +98,12 @@
       }
 
       // Login successful, redirect to return URL
-      window.location.href = returnTo;
+      showToast('Login successful', 'success');
+      setTimeout(() => {
+        window.location.href = returnTo;
+      }, 500);
     } catch (err) {
-      showError('Could not reach the server. Make sure the backend is running.');
+      showToast('Could not reach the server. Make sure the backend is running.', 'error');
       console.error(err);
       if (submitBtn) {
         submitBtn.disabled = false;

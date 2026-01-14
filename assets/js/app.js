@@ -72,9 +72,10 @@
         .then(async () => {
           data = await loadNotesData();
           renderSubjects(subjectGrid, data);
+          showToast(`Subject "${title}" created successfully`, 'success');
         })
         .catch((err) => {
-          alert('Could not create subject. See console for details.');
+          showToast('Could not create subject', 'error');
           console.error(err);
         });
     } else {
@@ -113,9 +114,10 @@
         .then(async () => {
           data = await loadNotesData();
           renderSubjects(subjectGrid, data);
+          showToast(`Subject deleted`, 'success');
         })
         .catch((err) => {
-          alert('Could not delete subject. See console for details.');
+          showToast('Could not delete subject', 'error');
           console.error(err);
         });
     } else {
@@ -172,6 +174,7 @@
         data = await loadNotesData();
         renderSubjects(subjectGrid, data);
         renderGlobalSearch(searchResults, data, globalSearch.value.trim());
+        showToast('Data imported successfully', 'success');
       } else {
         applyImportPayload(parsed);
 
@@ -182,9 +185,10 @@
         applyDeletedSubjects(data);
         renderSubjects(subjectGrid, data);
         renderGlobalSearch(searchResults, data, globalSearch.value.trim());
+        showToast('Data imported successfully', 'success');
       }
     } catch (err) {
-      alert('Import failed. Make sure you selected a valid backup JSON file.');
+      showToast('Import failed. Make sure you selected a valid backup JSON file.', 'error');
       console.error(err);
     } finally {
       importFile.value = '';

@@ -19,6 +19,9 @@
   const noteContentInput = document.getElementById('noteContent');
   const downloadMyNotesBtn = document.getElementById('downloadMyNotes');
   const cancelEditBtn = document.getElementById('cancelEdit');
+  const sortSelect = document.getElementById('sortSelect');
+  const wordCountEl = document.getElementById('wordCount');
+  const charCountEl = document.getElementById('charCount');
 
   const submitBtn = noteForm?.querySelector('button[type="submit"]');
   let editingNoteId = null;
@@ -72,6 +75,31 @@
 
   // Initial render
   renderNotes(notesContainer, allNotes);
+
+  // Update note stats as user types
+  noteContentInput?.addEventListener('input', () => {
+    const text = noteContentInput.value.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const chars = text.length;
+    if (wordCountEl) wordCountEl.textContent = words;
+    if (charCountEl) charCountEl.textContent = chars;
+  });
+
+  // Sort notes
+  sortSelect?.addEventListener('change', () => {
+    const sortType = sortSelect.value;
+    allNotes = sortNotes(allNotes, sortType);
+    const q = subjectSearch.value.trim().toLowerCase();
+    if (q) {
+      const filtered = allNotes.filter((note) => {
+        const haystack = [note.title, ...flattenNoteText(note.blocks || [])].join('\n').toLowerCase();
+        return haystack.includes(q);
+      });
+      renderNotes(notesContainer, filtered);
+    } else {
+      renderNotes(notesContainer, allNotes);
+    }
+  });
 
   // Search within this subject
   subjectSearch.addEventListener('input', () => {
@@ -155,10 +183,13 @@
 
         noteTitleInput.value = '';
         noteContentInput.value = '';
+        if (wordCountEl) wordCountEl.textContent = '0';
+        if (charCountEl) charCountEl.textContent = '0';
         noteTitleInput.focus();
+        showToast(editingNoteId ? 'Note updated' : 'Note saved successfully', 'success');
       })
       .catch((err) => {
-        alert('Could not save note. See console for details.');
+        showToast('Could not save note', 'error');
         console.error(err);
       });
   });
@@ -184,6 +215,17 @@
   });
 
   notesContainer?.addEventListener('click', (e) => {
+    const copyLinkBtn = e.target?.closest?.('[data-action="copy-link"]');
+    if (copyLinkBtn) {
+      const id = copyLinkBtn.getAttribute('data-id');
+      if (!id) return;
+      const url = `${window.location.origin}${window.location.pathname}${window.location.search}#${id}`;
+      navigator.clipboard.writeText(url)
+        .then(() => showToast('Link copied to clipboard', 'success'))
+        .catch(() => showToast('Failed to copy link', 'error'));
+      return;
+    }
+
     const editBtn = e.target?.closest?.('[data-action="edit-note"]');
     if (editBtn) {
       const id = editBtn.getAttribute('data-id');
@@ -196,6 +238,12 @@
       if (submitBtn) submitBtn.textContent = 'Save Changes';
       noteTitleInput.value = note.title || '';
       noteContentInput.value = blocksToEditorText(note.blocks || []);
+      
+      // Update stats for existing content
+      const text = noteContentInput.value.trim();
+      if (wordCountEl) wordCountEl.textContent = text ? text.split(/\s+/).length : 0;
+      if (charCountEl) charCountEl.textContent = text.length;
+      
       noteTitleInput.focus();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -231,10 +279,11 @@
 
         subjectMeta.textContent = `${allNotes.length} note${allNotes.length === 1 ? '' : 's'}`;
         renderNotes(notesContainer, allNotes);
+        showToast('Note deleted', 'success');
       };
 
       run().catch((err) => {
-        alert('Could not delete note. See console for details.');
+        showToast('Could not delete note', 'error');
         console.error(err);
       });
       return;
@@ -675,6 +724,7 @@ function renderNote(note) {
       <div class="note__header">
         <h2 class="note__title">${escapeHtml(title)}</h2>
         <div class="note__actions">
+          <button class="btn btn--ghost btn--copy-link" type="button" data-action="copy-link" data-id="${escapeAttr(note.id)}" title="Copy link to note">🔗 Copy Link</button>
           <button class="btn btn--ghost" type="button" data-action="edit-note" data-id="${escapeAttr(note.id)}">Edit</button>
           <button class="btn btn--danger" type="button" data-action="delete-note" data-id="${escapeAttr(note.id)}">Delete</button>
         </div>
@@ -726,12 +776,35 @@ function renderBlock(block) {
 
 function renderEmpty(message) {
   return `
-    <div class="note" role="status">
-      <div class="note__body">
-        <p class="muted">${escapeHtml(message)}</p>
-      </div>
+    <div class="empty-state" role="status">
+      <div class="empty-state__icon">📝</div>
+      <h3 class="empty-state__title">No notes yet</h3>
+      <p class="empty-state__text">${escapeHtml(message)}</p>
     </div>
   `.trim();
+}
+
+// ----------------------------
+// Sorting
+// ----------------------------
+
+function sortNotes(notes, sortType) {
+  const sorted = [...notes];
+  
+  switch (sortType) {
+    case 'title-asc':
+      sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      break;
+    case 'title-desc':
+      sorted.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
+      break;
+    case 'default':
+    default:
+      // Keep original order
+      break;
+  }
+  
+  return sorted;
 }
 
 // ----------------------------

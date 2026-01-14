@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <title>NoteSphere</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
@@ -48,6 +49,10 @@
       <button id="themeToggle" class="btn btn--ghost" type="button" aria-label="Toggle theme">
         <span class="btn__icon" aria-hidden="true">◐</span>
         <span class="btn__text">Theme</span>
+      </button>
+
+      <button id="helpBtn" class="btn btn--ghost" type="button" aria-label="Keyboard shortcuts" title="Show keyboard shortcuts (Ctrl+/)">
+        <span class="btn__icon" aria-hidden="true">❓</span>
       </button>
     </div>
   </header>
@@ -93,6 +98,8 @@
 
   <!-- Fallback data for file:// mode (no server). When served over HTTP, the app prefers notes.json. -->
   <script src="data/notes-data.js"></script>
+  <script src="assets/js/toast.js" defer></script>
+  <script src="assets/js/shortcuts.js" defer></script>
   <script src="assets/js/auth.js" defer></script>
   <script src="assets/js/app.js" defer></script>
 </body>

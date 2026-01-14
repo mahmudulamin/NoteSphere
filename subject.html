@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <title>Subject • NoteSphere</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
@@ -44,6 +45,10 @@
         <span class="btn__icon" aria-hidden="true">◐</span>
         <span class="btn__text">Theme</span>
       </button>
+
+      <button id="helpBtn" class="btn btn--ghost" type="button" aria-label="Keyboard shortcuts" title="Show keyboard shortcuts (Ctrl+/)">
+        <span class="btn__icon" aria-hidden="true">❓</span>
+      </button>
     </div>
   </header>
 
@@ -53,6 +58,14 @@
         <div>
           <h1 id="subjectTitle" class="page-title">Subject</h1>
           <p id="subjectMeta" class="muted">Loading…</p>
+          <div class="sort-controls">
+            <label for="sortSelect" class="sort-label">Sort:</label>
+            <select id="sortSelect" class="sort-select">
+              <option value="default">Default</option>
+              <option value="title-asc">Title (A-Z)</option>
+              <option value="title-desc">Title (Z-A)</option>
+            </select>
+          </div>
         </div>
 
         <div class="search search--compact">
@@ -76,6 +89,17 @@
           <label class="editor__label" for="noteContent">Content</label>
           <textarea id="noteContent" class="editor__textarea" rows="8" placeholder="Write notes using simple formatting:\n\n# Heading\n- bullet\n1. numbered\n\n```cpp\nint x = 1;\n```" required></textarea>
 
+          <div class="note-stats" id="noteStats">
+            <div class="note-stats__item">
+              <span>Words:</span>
+              <span id="wordCount">0</span>
+            </div>
+            <div class="note-stats__item">
+              <span>Characters:</span>
+              <span id="charCount">0</span>
+            </div>
+          </div>
+
           <div class="editor__actions">
             <button class="btn" type="submit">Save Note</button>
             <button id="cancelEdit" class="btn btn--ghost" type="button" hidden>Cancel</button>
@@ -90,6 +114,8 @@
 
   <!-- Fallback data for file:// mode (no server). When served over HTTP, the app prefers notes.json. -->
   <script src="data/notes-data.js"></script>
+  <script src="assets/js/toast.js" defer></script>
+  <script src="assets/js/shortcuts.js" defer></script>
   <script src="assets/js/auth.js" defer></script>
   <script src="assets/js/subject.js" defer></script>
 </body>
