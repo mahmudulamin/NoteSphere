@@ -48,20 +48,55 @@ When the backend is running, the frontend will automatically use `/api/*` endpoi
 
 ## Login / Logout (when using the backend)
 
-When you run the built-in backend, NoteSphere now supports a simple login/logout flow.
+When you run the built-in backend, NoteSphere requires login to access notes.
 
-- Login page: http://localhost:5500/login.html
-- Default credentials:
-  - Username: `admin`
-  - Password: `admin123`
+### Quick Start
+
+1. Start the server:
+
+   ```bash
+   npm start
+   ```
+
+2. Open your browser: http://localhost:5500/
+
+   - You'll be automatically redirected to the login page
+
+3. Login with default credentials:
+
+   - **Username:** `admin`
+   - **Password:** `admin123`
+
+4. After login, you'll see:
+   - Your username in the header
+   - A "Logout" button
+   - Full access to all notes
 
 ### Change credentials
 
-Set environment variables before starting the server:
+Set environment variables **before** starting the server:
 
-```bash
+**Windows (cmd):**
+
+```cmd
 set NOTESPHERE_USERNAME=myuser
 set NOTESPHERE_PASSWORD=mypass
+npm start
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$env:NOTESPHERE_USERNAME="myuser"
+$env:NOTESPHERE_PASSWORD="mypass"
+npm start
+```
+
+**Linux/Mac:**
+
+```bash
+export NOTESPHERE_USERNAME=myuser
+export NOTESPHERE_PASSWORD=mypass
 npm start
 ```
 
@@ -72,7 +107,32 @@ set NOTESPHERE_AUTH=0
 npm start
 ```
 
-Note: Login/logout only applies when using `node server.js` / `npm start`. If you open the site via `file://` or a different static server, the login API is not available.
+**Important:** Login/logout only works when using the Node.js backend (`npm start` or `node server.js`). If you open the site via `file://` or a different static server, authentication is not available.
+
+### Troubleshooting Login Issues
+
+**Issue: "Could not reach the server"**
+
+- Make sure the server is running: `npm start` or `node server.js`
+- Check the server log shows: `Auth: enabled`
+
+**Issue: "Invalid credentials"**
+
+- Default username: `admin`
+- Default password: `admin123`
+- Check if you set custom credentials via environment variables
+
+**Issue: Infinite redirect loop**
+
+- Clear browser cookies for localhost:5500
+- Restart the server
+- Try in a private/incognito window
+
+**Issue: Can't logout**
+
+- Click the "Logout" button in the header
+- You'll be redirected to the login page
+- To login again, enter credentials on the login page
 
 ## Run locally (no server) — easiest fallback
 

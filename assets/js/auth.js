@@ -21,10 +21,13 @@
 
   const setAuthedUi = (username) => {
     if (loginLink) loginLink.hidden = true;
-    if (logoutBtn) logoutBtn.hidden = false;
+    if (logoutBtn) {
+      logoutBtn.hidden = false;
+      logoutBtn.title = `Logout (${username})`;
+    }
     if (userChip) {
       userChip.hidden = false;
-      userChip.textContent = username ? `Signed in as ${username}` : 'Signed in';
+      userChip.textContent = username || 'Signed in';
     }
   };
 
@@ -41,7 +44,8 @@
     } catch {
       // ignore
     }
-    redirectToLogin();
+    // Redirect to home page, which will then redirect to login if needed
+    window.location.href = '/index.html';
   });
 
   try {

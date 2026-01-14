@@ -100,6 +100,14 @@ code, pre { font-family: var(--font-mono); }
   gap: 10px;
 }
 
+#userChip {
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;

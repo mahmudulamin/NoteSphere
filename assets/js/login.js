@@ -47,12 +47,14 @@
     if (res.ok) {
       const me = await res.json();
       if (me?.authenticated) {
+        // Already authenticated, redirect to return URL or home
         window.location.href = returnTo;
         return;
       }
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    // Backend not reachable
+    console.log('Backend check failed:', err);
   }
 
   loginForm?.addEventListener('submit', async (e) => {
@@ -67,6 +69,13 @@
       return;
     }
 
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn?.textContent || 'Login';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+    }
+
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -78,13 +87,25 @@
         const payload = await res.json().catch(() => null);
         const msg = payload?.error || `Login failed (HTTP ${res.status})`;
         showError(msg);
+        // Clear password field on failed login
+        if (passwordEl) passwordEl.value = '';
+        if (passwordEl) passwordEl.focus();
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
         return;
       }
 
+      // Login successful, redirect to return URL
       window.location.href = returnTo;
     } catch (err) {
       showError('Could not reach the server. Make sure the backend is running.');
       console.error(err);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     }
   });
 })();
