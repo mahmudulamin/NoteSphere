@@ -44,6 +44,11 @@
       mergeUserNotesIntoData(data);
     }
   } catch (err) {
+    if (String(err?.message || '').includes('AUTH_REQUIRED')) {
+      const returnUrl = window.location.pathname + window.location.search;
+      window.location.href = `/login.html?return=${encodeURIComponent(returnUrl)}`;
+      return;
+    }
     subjectTitle.textContent = 'Failed to load notes';
     subjectMeta.textContent = 'Run via a local server. See README.md.';
     notesContainer.innerHTML = renderEmpty('Could not load data/notes.json.');
@@ -299,6 +304,12 @@ async function loadNotesData() {
       window.__notesBackendAvailable = true;
       return await res.json();
     }
+
+    // Backend reachable but auth required.
+    if (res.status === 401) {
+      window.__notesBackendAvailable = true;
+      throw new Error('AUTH_REQUIRED');
+    }
   } catch {
     // ignore and fall back
   }
@@ -326,6 +337,13 @@ async function fetchJson(url, { method = 'GET', body } = {}) {
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined
   });
+
+  if (res.status === 401) {
+    const returnUrl = window.location.pathname + window.location.search;
+    window.location.href = `/login.html?return=${encodeURIComponent(returnUrl)}`;
+    throw new Error('AUTH_REQUIRED');
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status} ${url}: ${text}`);
@@ -351,6 +369,11 @@ async function deleteNoteBackend(subjectSlug, noteId) {
   const res = await fetch(`/api/subjects/${encodeURIComponent(subjectSlug)}/notes/${encodeURIComponent(noteId)}`, {
     method: 'DELETE'
   });
+  if (res.status === 401) {
+    const returnUrl = window.location.pathname + window.location.search;
+    window.location.href = `/login.html?return=${encodeURIComponent(returnUrl)}`;
+    throw new Error('AUTH_REQUIRED');
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status}: ${text}`);

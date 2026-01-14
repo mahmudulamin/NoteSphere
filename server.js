@@ -17,10 +17,19 @@
 const http = require('http');
 const { promises: fs } = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const ROOT = __dirname;
 const DATA_FILE = path.join(ROOT, 'data', 'notes.json');
 const PORT = Number(process.env.PORT || 5500);
+
+const AUTH_ENABLED = String(process.env.NOTESPHERE_AUTH ?? '1') !== '0';
+const AUTH_USERNAME = String(process.env.NOTESPHERE_USERNAME || 'admin');
+const AUTH_PASSWORD = String(process.env.NOTESPHERE_PASSWORD || 'admin123');
+const SESSION_COOKIE = 'notesphere.sid';
+const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+const sessions = new Map();
 
 let writeLock = Promise.resolve();
 
@@ -38,6 +47,67 @@ function sendJson(res, status, obj, extraHeaders = {}) {
     ...extraHeaders
   });
   res.end(body);
+}
+
+function parseCookies(cookieHeader) {
+  const out = {};
+  if (!cookieHeader) return out;
+  const parts = cookieHeader.split(';');
+  for (const part of parts) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    const key = part.slice(0, idx).trim();
+    const val = part.slice(idx + 1).trim();
+    if (!key) continue;
+    out[key] = decodeURIComponent(val);
+  }
+  return out;
+}
+
+function getReturnTo(url) {
+  const full = url.pathname + (url.search || '');
+  // Avoid open redirects: allow only same-site relative paths.
+  if (!full.startsWith('/')) return '/index.html';
+  if (full.startsWith('//')) return '/index.html';
+  return full;
+}
+
+function setSessionCookie(res, sessionId, { maxAgeSeconds } = {}) {
+  const parts = [
+    `${SESSION_COOKIE}=${encodeURIComponent(sessionId)}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax'
+  ];
+  if (typeof maxAgeSeconds === 'number') parts.push(`Max-Age=${Math.max(0, Math.floor(maxAgeSeconds))}`);
+  // If you're serving over HTTPS in production, also add: Secure
+  res.setHeader('Set-Cookie', parts.join('; '));
+}
+
+function clearSessionCookie(res) {
+  setSessionCookie(res, 'deleted', { maxAgeSeconds: 0 });
+}
+
+function getSession(req) {
+  if (!AUTH_ENABLED) return { username: 'anonymous' };
+  const cookies = parseCookies(req.headers.cookie);
+  const sid = cookies[SESSION_COOKIE];
+  if (!sid) return null;
+  const session = sessions.get(sid);
+  if (!session) return null;
+  if (Date.now() - session.createdAt > SESSION_TTL_MS) {
+    sessions.delete(sid);
+    return null;
+  }
+  return session;
+}
+
+function requireAuthApi(req, res) {
+  if (!AUTH_ENABLED) return { username: 'anonymous' };
+  const session = getSession(req);
+  if (session) return session;
+  sendJson(res, 401, { error: 'Unauthorized' });
+  return null;
 }
 
 function sendText(res, status, text, extraHeaders = {}) {
@@ -145,6 +215,47 @@ function matchRoute(urlPath, pattern) {
 async function handleApi(req, res, url) {
   if (req.method === 'GET' && url.pathname === '/api/health') {
     return sendJson(res, 200, { ok: true });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/me') {
+    if (!AUTH_ENABLED) return sendJson(res, 200, { authenticated: true, username: 'anonymous' });
+    const session = getSession(req);
+    return sendJson(res, 200, session ? { authenticated: true, username: session.username } : { authenticated: false });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/login') {
+    const body = await readJsonBody(req);
+    const username = body?.username ? String(body.username).trim() : '';
+    const password = body?.password ? String(body.password) : '';
+    if (!username || !password) return sendJson(res, 400, { error: 'username and password are required' });
+
+    if (!AUTH_ENABLED) {
+      return sendJson(res, 400, { error: 'Auth is disabled on this server' });
+    }
+
+    if (username !== AUTH_USERNAME || password !== AUTH_PASSWORD) {
+      return sendJson(res, 401, { error: 'Invalid credentials' });
+    }
+
+    const sid = crypto.randomBytes(24).toString('hex');
+    sessions.set(sid, { username, createdAt: Date.now() });
+    setSessionCookie(res, sid, { maxAgeSeconds: Math.floor(SESSION_TTL_MS / 1000) });
+    return sendJson(res, 200, { ok: true, username });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/logout') {
+    const session = getSession(req);
+    const cookies = parseCookies(req.headers.cookie);
+    const sid = cookies[SESSION_COOKIE];
+    if (sid) sessions.delete(sid);
+    clearSessionCookie(res);
+    return sendJson(res, 200, { ok: true, wasAuthenticated: Boolean(session) });
+  }
+
+  // Require auth for all remaining API endpoints.
+  if (AUTH_ENABLED) {
+    const session = requireAuthApi(req, res);
+    if (!session) return;
   }
 
   if (req.method === 'GET' && url.pathname === '/api/data') {
@@ -290,6 +401,26 @@ async function handleStatic(req, res, url) {
   let reqPath = url.pathname;
   if (reqPath === '/') reqPath = '/index.html';
 
+  if (AUTH_ENABLED) {
+    const session = getSession(req);
+    const isLoginPage = reqPath === '/login.html';
+    const isProtectedHtml = reqPath === '/index.html' || reqPath === '/subject.html';
+    const isProtectedData = reqPath.startsWith('/data/');
+
+    if (!session && !isLoginPage && (isProtectedHtml || isProtectedData)) {
+      // For data requests, return 401 instead of redirecting.
+      if (isProtectedData) {
+        const asJson = reqPath.toLowerCase().endsWith('.json');
+        if (asJson) return sendJson(res, 401, { error: 'Unauthorized' });
+        return sendText(res, 401, 'Unauthorized');
+      }
+
+      const returnTo = encodeURIComponent(getReturnTo(url));
+      res.writeHead(302, { Location: `/login.html?return=${returnTo}` });
+      return res.end();
+    }
+  }
+
   const filePath = safeJoin(ROOT, reqPath);
   if (!filePath) return sendText(res, 400, 'Bad path');
 
@@ -333,4 +464,13 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`Notes server running at http://localhost:${PORT}/`);
   console.log(`Data file: ${DATA_FILE}`);
+
+  if (AUTH_ENABLED) {
+    console.log('Auth: enabled');
+    console.log(`Login: username="${AUTH_USERNAME}" password="${AUTH_PASSWORD}"`);
+    console.log('Tip: set NOTESPHERE_USERNAME and NOTESPHERE_PASSWORD env vars to change credentials.');
+    console.log('Tip: set NOTESPHERE_AUTH=0 to disable auth (not recommended).');
+  } else {
+    console.log('Auth: disabled (NOTESPHERE_AUTH=0)');
+  }
 });

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Login • NoteSphere</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="./index.html" aria-label="Go to home">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__text">NoteSphere</span>
+    </a>
+
+    <div class="header-actions">
+      <a class="btn btn--ghost" href="./index.html">
+        <span class="btn__icon" aria-hidden="true">←</span>
+        <span class="btn__text">Home</span>
+      </a>
+
+      <a id="loginLink" class="btn btn--ghost" href="./login.html" hidden>
+        <span class="btn__icon" aria-hidden="true">⎆</span>
+        <span class="btn__text">Login</span>
+      </a>
+
+      <button id="logoutBtn" class="btn btn--ghost" type="button" hidden>
+        <span class="btn__icon" aria-hidden="true">⇥</span>
+        <span class="btn__text">Logout</span>
+      </button>
+
+      <button id="themeToggle" class="btn btn--ghost" type="button" aria-label="Toggle theme">
+        <span class="btn__icon" aria-hidden="true">◐</span>
+        <span class="btn__text">Theme</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section">
+      <div class="section__header">
+        <div>
+          <h1 class="page-title">Login</h1>
+          <p class="muted">Sign in to view and edit your notes.</p>
+        </div>
+      </div>
+
+      <div class="card" style="max-width: 520px;">
+        <form id="loginForm" class="editor__form" aria-label="Login">
+          <label class="editor__label" for="username">Username</label>
+          <input id="username" class="editor__input" type="text" autocomplete="username" required />
+
+          <label class="editor__label" for="password">Password</label>
+          <input id="password" class="editor__input" type="password" autocomplete="current-password" required />
+
+          <p id="loginError" class="muted" style="margin: 8px 0 0;" hidden></p>
+
+          <div class="editor__actions" style="margin-top: 12px;">
+            <button class="btn" type="submit">Login</button>
+            <a class="btn btn--ghost" href="./index.html">Cancel</a>
+          </div>
+
+          <p id="serverHint" class="muted" style="margin: 12px 0 0;" hidden></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/auth.js" defer></script>
+  <script src="assets/js/login.js" defer></script>
+</body>
+</html>

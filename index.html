@@ -22,6 +22,18 @@
     </a>
 
     <div class="header-actions">
+      <span id="userChip" class="muted" hidden></span>
+
+      <a id="loginLink" class="btn btn--ghost" href="./login.html" hidden>
+        <span class="btn__icon" aria-hidden="true">⎆</span>
+        <span class="btn__text">Login</span>
+      </a>
+
+      <button id="logoutBtn" class="btn btn--ghost" type="button" hidden>
+        <span class="btn__icon" aria-hidden="true">⇥</span>
+        <span class="btn__text">Logout</span>
+      </button>
+
       <button id="exportData" class="btn btn--ghost" type="button" aria-label="Export NoteSphere data">
         <span class="btn__icon" aria-hidden="true">⤓</span>
         <span class="btn__text">Export</span>
@@ -81,6 +93,7 @@
 
   <!-- Fallback data for file:// mode (no server). When served over HTTP, the app prefers notes.json. -->
   <script src="data/notes-data.js"></script>
+  <script src="assets/js/auth.js" defer></script>
   <script src="assets/js/app.js" defer></script>
 </body>
 </html>

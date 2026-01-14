@@ -1,0 +1,12 @@
+Notes server running at http://localhost:5500/
+Data file: e:\NoteSphere\data\notes.json
+Auth: enabled
+Login: username="admin" password="admin123"
+Tip: set NOTESPHERE_USERNAME and NOTESPHERE_PASSWORD env vars to change credentials.
+Tip: set NOTESPHERE_AUTH=0 to disable auth (not recommended).
+SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at readJsonBody (e:\NoteSphere\server.js:196:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async handleApi (e:\NoteSphere\server.js:227:18)
+    at async Server.<anonymous> (e:\NoteSphere\server.js:454:14)

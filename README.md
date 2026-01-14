@@ -46,6 +46,34 @@ set PORT=5510 && node server.js
 
 When the backend is running, the frontend will automatically use `/api/*` endpoints instead of `localStorage`.
 
+## Login / Logout (when using the backend)
+
+When you run the built-in backend, NoteSphere now supports a simple login/logout flow.
+
+- Login page: http://localhost:5500/login.html
+- Default credentials:
+  - Username: `admin`
+  - Password: `admin123`
+
+### Change credentials
+
+Set environment variables before starting the server:
+
+```bash
+set NOTESPHERE_USERNAME=myuser
+set NOTESPHERE_PASSWORD=mypass
+npm start
+```
+
+### Disable auth (not recommended)
+
+```bash
+set NOTESPHERE_AUTH=0
+npm start
+```
+
+Note: Login/logout only applies when using `node server.js` / `npm start`. If you open the site via `file://` or a different static server, the login API is not available.
+
 ## Run locally (no server) — easiest fallback
 
 This project also ships a fallback data file so you can open it without any terminal commands.
