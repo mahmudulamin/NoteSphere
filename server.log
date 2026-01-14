@@ -1,6 +1,6 @@
 Notes server running at http://localhost:5500/
 Data file: e:\NoteSphere\data\notes.json
+Users file: e:\NoteSphere\data\users.json
 Auth: enabled
-Login: username="admin" password="admin123"
-Tip: set NOTESPHERE_USERNAME and NOTESPHERE_PASSWORD env vars to change credentials.
-Tip: set NOTESPHERE_AUTH=0 to disable auth (not recommended).
+Registered users: 1
+Google OAuth: disabled (set GOOGLE_CLIENT_ID to enable)

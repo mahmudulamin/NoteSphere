@@ -15,23 +15,137 @@
 */
 
 const http = require('http');
+const https = require('https');
 const { promises: fs } = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { URL } = require('url');
+
+let bcrypt;
+try {
+  bcrypt = require('bcryptjs');
+} catch (err) {
+  console.warn('bcryptjs not installed. Run: npm install');
+  bcrypt = null;
+}
 
 const ROOT = __dirname;
 const DATA_FILE = path.join(ROOT, 'data', 'notes.json');
+const USERS_FILE = path.join(ROOT, 'data', 'users.json');
 const PORT = Number(process.env.PORT || 5500);
 
 const AUTH_ENABLED = String(process.env.NOTESPHERE_AUTH ?? '1') !== '0';
-const AUTH_USERNAME = String(process.env.NOTESPHERE_USERNAME || 'admin');
-const AUTH_PASSWORD = String(process.env.NOTESPHERE_PASSWORD || 'admin123');
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const SESSION_COOKIE = 'notesphere.sid';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const sessions = new Map();
+let users = new Map(); // username -> { username, passwordHash, email, provider, createdAt }
 
 let writeLock = Promise.resolve();
+
+// ----------------------------
+// User Management
+// ----------------------------
+
+async function loadUsers() {
+  try {
+    const raw = await fs.readFile(USERS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    users = new Map(Object.entries(parsed));
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      users = new Map();
+      // Create default admin if no users exist
+      if (bcrypt) {
+        const hash = await bcrypt.hash('admin123', 10);
+        users.set('admin', {
+          username: 'admin',
+          passwordHash: hash,
+          email: 'admin@notesphere.local',
+          provider: 'local',
+          createdAt: new Date().toISOString()
+        });
+        await saveUsers();
+      }
+    } else {
+      console.error('Failed to load users:', err);
+    }
+  }
+}
+
+async function saveUsers() {
+  await fs.mkdir(path.dirname(USERS_FILE), { recursive: true });
+  const data = Object.fromEntries(users);
+  await fs.writeFile(USERS_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+async function createUser(username, password, email, provider = 'local') {
+  if (users.has(username)) {
+    throw new Error('Username already exists');
+  }
+  
+  let passwordHash = null;
+  if (provider === 'local' && password) {
+    if (!bcrypt) throw new Error('Password hashing not available');
+    passwordHash = await bcrypt.hash(password, 10);
+  }
+  
+  const user = {
+    username,
+    passwordHash,
+    email,
+    provider,
+    createdAt: new Date().toISOString()
+  };
+  
+  users.set(username, user);
+  await saveUsers();
+  return { username, email, provider };
+}
+
+async function verifyPassword(username, password) {
+  const user = users.get(username);
+  if (!user || !user.passwordHash) return false;
+  if (!bcrypt) return false;
+  return await bcrypt.compare(password, user.passwordHash);
+}
+
+function findUserByEmail(email) {
+  for (const user of users.values()) {
+    if (user.email === email) return user;
+  }
+  return null;
+}
+
+// Simplified Google token verification
+// In production, use google-auth-library package
+async function verifyGoogleToken(idToken) {
+  return new Promise((resolve) => {
+    // This is a simplified verification that decodes the JWT
+    // For production, you MUST use proper verification with Google's certificates
+    try {
+      const parts = idToken.split('.');
+      if (parts.length !== 3) {
+        resolve(null);
+        return;
+      }
+      
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      
+      // Basic validation (in production, verify signature and issuer)
+      if (payload.email && payload.email_verified) {
+        resolve(payload);
+      } else {
+        resolve(null);
+      }
+    } catch (err) {
+      console.error('Token decode error:', err);
+      resolve(null);
+    }
+  });
+}
 
 function withWriteLock(fn) {
   // Serialize writes to avoid clobbering notes.json.
@@ -233,14 +347,118 @@ async function handleApi(req, res, url) {
       return sendJson(res, 400, { error: 'Auth is disabled on this server' });
     }
 
-    if (username !== AUTH_USERNAME || password !== AUTH_PASSWORD) {
+    const isValid = await verifyPassword(username, password);
+    if (!isValid) {
       return sendJson(res, 401, { error: 'Invalid credentials' });
     }
 
+    const user = users.get(username);
     const sid = crypto.randomBytes(24).toString('hex');
-    sessions.set(sid, { username, createdAt: Date.now() });
+    sessions.set(sid, { username, email: user.email, createdAt: Date.now() });
     setSessionCookie(res, sid, { maxAgeSeconds: Math.floor(SESSION_TTL_MS / 1000) });
-    return sendJson(res, 200, { ok: true, username });
+    return sendJson(res, 200, { ok: true, username, email: user.email });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/register') {
+    const body = await readJsonBody(req);
+    const username = body?.username ? String(body.username).trim() : '';
+    const password = body?.password ? String(body.password) : '';
+    const email = body?.email ? String(body.email).trim() : '';
+
+    if (!username || !password || !email) {
+      return sendJson(res, 400, { error: 'username, password, and email are required' });
+    }
+
+    if (!AUTH_ENABLED) {
+      return sendJson(res, 400, { error: 'Auth is disabled on this server' });
+    }
+
+    if (!bcrypt) {
+      return sendJson(res, 500, { error: 'Registration not available. Install bcryptjs: npm install' });
+    }
+
+    // Validate username
+    if (username.length < 3 || username.length > 20) {
+      return sendJson(res, 400, { error: 'Username must be 3-20 characters' });
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      return sendJson(res, 400, { error: 'Username can only contain letters, numbers, - and _' });
+    }
+
+    // Validate email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return sendJson(res, 400, { error: 'Invalid email address' });
+    }
+
+    // Check if email already exists
+    if (findUserByEmail(email)) {
+      return sendJson(res, 409, { error: 'Email already registered' });
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      return sendJson(res, 400, { error: 'Password must be at least 6 characters' });
+    }
+
+    try {
+      const user = await createUser(username, password, email, 'local');
+      
+      // Auto-login after registration
+      const sid = crypto.randomBytes(24).toString('hex');
+      sessions.set(sid, { username: user.username, email: user.email, createdAt: Date.now() });
+      setSessionCookie(res, sid, { maxAgeSeconds: Math.floor(SESSION_TTL_MS / 1000) });
+      
+      return sendJson(res, 201, { ok: true, username: user.username, email: user.email });
+    } catch (err) {
+      if (err.message === 'Username already exists') {
+        return sendJson(res, 409, { error: err.message });
+      }
+      console.error('Registration error:', err);
+      return sendJson(res, 500, { error: 'Registration failed' });
+    }
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/auth/google') {
+    const body = await readJsonBody(req);
+    const idToken = body?.idToken ? String(body.idToken) : '';
+
+    if (!idToken) {
+      return sendJson(res, 400, { error: 'idToken is required' });
+    }
+
+    if (!AUTH_ENABLED) {
+      return sendJson(res, 400, { error: 'Auth is disabled on this server' });
+    }
+
+    try {
+      // Verify Google ID token (simplified - in production use google-auth-library)
+      const payload = await verifyGoogleToken(idToken);
+      
+      if (!payload) {
+        return sendJson(res, 401, { error: 'Invalid Google token' });
+      }
+
+      const email = payload.email;
+      const username = email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      // Find or create user
+      let user = findUserByEmail(email);
+      if (!user) {
+        // Create new user from Google account
+        const createdUser = await createUser(username, null, email, 'google');
+        user = { username: createdUser.username, email: createdUser.email };
+      }
+
+      // Create session
+      const sid = crypto.randomBytes(24).toString('hex');
+      sessions.set(sid, { username: user.username, email: user.email, createdAt: Date.now() });
+      setSessionCookie(res, sid, { maxAgeSeconds: Math.floor(SESSION_TTL_MS / 1000) });
+
+      return sendJson(res, 200, { ok: true, username: user.username, email: user.email });
+    } catch (err) {
+      console.error('Google auth error:', err);
+      return sendJson(res, 401, { error: 'Google authentication failed' });
+    }
   }
 
   if (req.method === 'POST' && url.pathname === '/api/logout') {
@@ -461,16 +679,23 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Notes server running at http://localhost:${PORT}/`);
-  console.log(`Data file: ${DATA_FILE}`);
+// Initialize users database
+loadUsers().then(() => {
+  server.listen(PORT, () => {
+    console.log(`Notes server running at http://localhost:${PORT}/`);
+    console.log(`Data file: ${DATA_FILE}`);
+    console.log(`Users file: ${USERS_FILE}`);
 
-  if (AUTH_ENABLED) {
-    console.log('Auth: enabled');
-    console.log(`Login: username="${AUTH_USERNAME}" password="${AUTH_PASSWORD}"`);
-    console.log('Tip: set NOTESPHERE_USERNAME and NOTESPHERE_PASSWORD env vars to change credentials.');
-    console.log('Tip: set NOTESPHERE_AUTH=0 to disable auth (not recommended).');
-  } else {
-    console.log('Auth: disabled (NOTESPHERE_AUTH=0)');
-  }
+    if (AUTH_ENABLED) {
+      console.log('Auth: enabled');
+      console.log(`Registered users: ${users.size}`);
+      if (GOOGLE_CLIENT_ID) {
+        console.log('Google OAuth: enabled');
+      } else {
+        console.log('Google OAuth: disabled (set GOOGLE_CLIENT_ID to enable)');
+      }
+    } else {
+      console.log('Auth: disabled (NOTESPHERE_AUTH=0)');
+    }
+  });
 });

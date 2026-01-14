@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
-  <title>Login • NoteSphere</title>
+  <title>Register • NoteSphere</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
@@ -16,20 +16,10 @@
     </a>
 
     <div class="header-actions">
-      <a class="btn btn--ghost" href="./index.html">
+      <a class="btn btn--ghost" href="./login.html">
         <span class="btn__icon" aria-hidden="true">←</span>
-        <span class="btn__text">Home</span>
-      </a>
-
-      <a id="loginLink" class="btn btn--ghost" href="./login.html" hidden>
-        <span class="btn__icon" aria-hidden="true">⎆</span>
         <span class="btn__text">Login</span>
       </a>
-
-      <button id="logoutBtn" class="btn btn--ghost" type="button" hidden>
-        <span class="btn__icon" aria-hidden="true">⇥</span>
-        <span class="btn__text">Logout</span>
-      </button>
 
       <button id="themeToggle" class="btn btn--ghost" type="button" aria-label="Toggle theme">
         <span class="btn__icon" aria-hidden="true">◐</span>
@@ -42,8 +32,8 @@
     <section class="section">
       <div class="section__header">
         <div>
-          <h1 class="page-title">Login</h1>
-          <p class="muted">Sign in to view and edit your notes.</p>
+          <h1 class="page-title">Create Account</h1>
+          <p class="muted">Sign up to start organizing your notes.</p>
         </div>
       </div>
 
@@ -57,7 +47,7 @@
               <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.593.102-1.17.282-1.709V4.958H.957C.347 6.173 0 7.548 0 9c0 1.452.348 2.827.957 4.042l3.007-2.335z"/>
               <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
             </svg>
-            <span class="btn__text">Sign in with Google</span>
+            <span class="btn__text">Sign up with Google</span>
           </button>
         </div>
 
@@ -65,25 +55,28 @@
           <span class="divider__text">or</span>
         </div>
 
-        <form id="loginForm" class="editor__form" aria-label="Login">
+        <!-- Registration Form -->
+        <form id="registerForm" class="editor__form" aria-label="Register">
           <label class="editor__label" for="username">Username</label>
-          <input id="username" class="editor__input" type="text" autocomplete="username" required />
+          <input id="username" class="editor__input" type="text" autocomplete="username" placeholder="Choose a username" required />
+
+          <label class="editor__label" for="email">Email</label>
+          <input id="email" class="editor__input" type="email" autocomplete="email" placeholder="your@email.com" required />
 
           <label class="editor__label" for="password">Password</label>
-          <input id="password" class="editor__input" type="password" autocomplete="current-password" required />
+          <input id="password" class="editor__input" type="password" autocomplete="new-password" placeholder="At least 6 characters" required />
 
-          <p id="loginError" class="muted" style="margin: 8px 0 0;" hidden></p>
+          <label class="editor__label" for="confirmPassword">Confirm Password</label>
+          <input id="confirmPassword" class="editor__input" type="password" autocomplete="new-password" placeholder="Re-enter password" required />
 
           <div class="editor__actions" style="margin-top: 12px;">
-            <button class="btn" type="submit">Login</button>
-            <a class="btn btn--ghost" href="./index.html">Cancel</a>
+            <button class="btn" type="submit">Create Account</button>
+            <a class="btn btn--ghost" href="./login.html">Cancel</a>
           </div>
 
           <p class="muted" style="margin: 12px 0 0; font-size: 0.9rem; text-align: center;">
-            Don't have an account? <a href="./register.html" style="color: var(--accent);">Sign up here</a>
+            Already have an account? <a href="./login.html" style="color: var(--accent);">Login here</a>
           </p>
-
-          <p id="serverHint" class="muted" style="margin: 12px 0 0;" hidden></p>
         </form>
       </div>
     </section>
@@ -91,6 +84,6 @@
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="assets/js/toast.js" defer></script>
-  <script src="assets/js/login.js" defer></script>
+  <script src="assets/js/register.js" defer></script>
 </body>
 </html>

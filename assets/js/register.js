@@ -1,15 +1,15 @@
 /*
-  login.js
-  - Handles login form submission
-  - Shows a helpful hint if backend isn't running
+  register.js
+  - Handles user registration form
+  - Google Sign-In integration
 */
 
 (async function () {
-  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
   const usernameEl = document.getElementById('username');
+  const emailEl = document.getElementById('email');
   const passwordEl = document.getElementById('password');
-  const loginError = document.getElementById('loginError');
-  const serverHint = document.getElementById('serverHint');
+  const confirmPasswordEl = document.getElementById('confirmPassword');
   const googleSignInBtn = document.getElementById('googleSignIn');
 
   const themeToggle = document.getElementById('themeToggle');
@@ -18,10 +18,25 @@
   const params = new URLSearchParams(window.location.search);
   const returnTo = params.get('return') || '/index.html';
 
+  // Check if already logged in
+  try {
+    const res = await fetch('/api/me', { cache: 'no-store' });
+    if (res.ok) {
+      const me = await res.json();
+      if (me?.authenticated) {
+        window.location.href = returnTo;
+        return;
+      }
+    }
+  } catch (err) {
+    console.log('Backend check failed:', err);
+  }
+
   // Initialize Google Sign-In
   if (window.google) {
     initGoogleSignIn();
   } else {
+    // Wait for Google script to load
     window.addEventListener('load', () => {
       if (window.google) initGoogleSignIn();
     });
@@ -30,6 +45,7 @@
   function initGoogleSignIn() {
     googleSignInBtn?.addEventListener('click', async () => {
       try {
+        // Initialize Google Identity Services
         const client = google.accounts.oauth2.initTokenClient({
           client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
           scope: 'email profile',
@@ -49,32 +65,36 @@
 
   async function handleGoogleAuth(accessToken) {
     try {
+      // Get user info from Google
       const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       
-      if (!userInfoRes.ok) throw new Error('Failed to get user info');
+      if (!userInfoRes.ok) {
+        throw new Error('Failed to get user info');
+      }
 
       const userInfo = await userInfoRes.json();
       
+      // Send to our backend
       const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: userInfo.email,
           name: userInfo.name,
-          idToken: accessToken
+          idToken: accessToken // In production, send the ID token
         })
       });
 
       if (res.ok) {
-        showToast('Login successful', 'success');
+        showToast('Successfully registered with Google!', 'success');
         setTimeout(() => {
           window.location.href = returnTo;
         }, 500);
       } else {
         const error = await res.json();
-        showToast(error.error || 'Google login failed', 'error');
+        showToast(error.error || 'Google registration failed', 'error');
       }
     } catch (err) {
       showToast('Google authentication failed', 'error');
@@ -82,78 +102,46 @@
     }
   }
 
-  const showError = (msg) => {
-    if (!loginError) return;
-    loginError.hidden = false;
-    loginError.textContent = msg;
-  };
-
-  const hideError = () => {
-    if (!loginError) return;
-    loginError.hidden = true;
-    loginError.textContent = '';
-  };
-
-  // If backend is down, show guidance.
-  try {
-    const res = await fetch('/api/health', { cache: 'no-store' });
-    if (!res.ok) throw new Error('not ok');
-    if (serverHint) serverHint.hidden = true;
-  } catch {
-    if (serverHint) {
-      serverHint.hidden = false;
-      serverHint.textContent = 'Login works only when running the backend. Start it with: npm start (or node server.js)';
-    }
-  }
-
-  // If already logged in, go back.
-  try {
-    const res = await fetch('/api/me', { cache: 'no-store' });
-    if (res.ok) {
-      const me = await res.json();
-      if (me?.authenticated) {
-        // Already authenticated, redirect to return URL or home
-        window.location.href = returnTo;
-        return;
-      }
-    }
-  } catch (err) {
-    // Backend not reachable
-    console.log('Backend check failed:', err);
-  }
-
-  loginForm?.addEventListener('submit', async (e) => {
+  registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    hideError();
 
     const username = (usernameEl?.value || '').trim();
+    const email = (emailEl?.value || '').trim();
     const password = passwordEl?.value || '';
+    const confirmPassword = confirmPasswordEl?.value || '';
 
-    if (!username || !password) {
-      showError('Please enter username and password.');
+    if (!username || !email || !password || !confirmPassword) {
+      showToast('Please fill in all fields', 'error');
       return;
     }
 
-    const submitBtn = loginForm.querySelector('button[type="submit"]');
-    const originalText = submitBtn?.textContent || 'Login';
+    if (password !== confirmPassword) {
+      showToast('Passwords do not match', 'error');
+      if (confirmPasswordEl) confirmPasswordEl.value = '';
+      if (confirmPasswordEl) confirmPasswordEl.focus();
+      return;
+    }
+
+    const submitBtn = registerForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn?.textContent || 'Create Account';
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Logging in...';
+      submitBtn.textContent = 'Creating account...';
     }
 
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, email, password })
       });
 
       if (!res.ok) {
         const payload = await res.json().catch(() => null);
-        const msg = payload?.error || `Login failed (HTTP ${res.status})`;
+        const msg = payload?.error || `Registration failed (HTTP ${res.status})`;
         showToast(msg, 'error');
-        // Clear password field on failed login
         if (passwordEl) passwordEl.value = '';
+        if (confirmPasswordEl) confirmPasswordEl.value = '';
         if (passwordEl) passwordEl.focus();
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -162,8 +150,7 @@
         return;
       }
 
-      // Login successful, redirect to return URL
-      showToast('Login successful', 'success');
+      showToast('Account created successfully!', 'success');
       setTimeout(() => {
         window.location.href = returnTo;
       }, 500);

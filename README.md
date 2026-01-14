@@ -33,10 +33,12 @@ A clean, responsive notes site (NoteSphere) that loads subjects/notes from a loc
 
 ### 🔐 Authentication & Security
 
-- **Login/Logout** - Session-based authentication
+- **User Registration** - Create account with username, email, and password
+- **Google OAuth** - Sign in/up with Google account (one-click authentication)
+- **Password Hashing** - Secure bcrypt password storage
+- **Session Management** - Cookie-based sessions with 7-day expiry
 - **Protected Routes** - Secure access to notes and data
-- **Configurable Credentials** - Set username/password via environment variables
-- **Session Management** - 7-day session expiry
+- **Multi-user Support** - Each user has their own account and can manage their notes
 
 ### ⌨️ Keyboard Shortcuts
 
@@ -60,8 +62,9 @@ A clean, responsive notes site (NoteSphere) that loads subjects/notes from a loc
 ### 🎯 Developer Experience
 
 - **No Build Step** - Pure HTML/CSS/JS, works immediately
-- **Well-documented** - Clear code comments and README
+- **Well-documented** - Clear code comments, README, and setup guides
 - **Modular Architecture** - Easy to extend and customize
+- **Google OAuth Guide** - Step-by-step setup instructions in [GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md)
 
 ## Run locally (recommended)
 
@@ -100,59 +103,83 @@ When the backend is running, the frontend will automatically use `/api/*` endpoi
 
 ## Login / Logout (when using the backend)
 
-When you run the built-in backend, NoteSphere requires login to access notes.
+When you run the built-in backend, NoteSphere requires authentication to access notes.
 
 ### Quick Start
 
-1. Start the server:
+1. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Start the server:**
 
    ```bash
    npm start
    ```
 
-2. Open your browser: http://localhost:5500/
+3. **Open your browser:** http://localhost:5500/
 
    - You'll be automatically redirected to the login page
 
-3. Login with default credentials:
+4. **Create an account:**
 
-   - **Username:** `admin`
-   - **Password:** `admin123`
+   - Click "Sign up here" on the login page
+   - Choose one of two methods:
+     - **Sign up with Google** (one-click, no password needed)
+     - **Traditional registration** (username, email, password)
 
-4. After login, you'll see:
-   - Your username in the header
-   - A "Logout" button
-   - Full access to all notes
+5. **After registration/login:**
+   - Your username appears in the header
+   - You'll see a "Logout" button
+   - Full access to create and manage notes
 
-### Change credentials
+### Authentication Methods
 
-Set environment variables **before** starting the server:
+#### Option 1: Google Sign-In (Recommended)
 
-**Windows (cmd):**
+- One-click authentication
+- No password to remember
+- Uses your existing Google account
+- Secure OAuth 2.0 flow
 
-```cmd
-set NOTESPHERE_USERNAME=myuser
-set NOTESPHERE_PASSWORD=mypass
-npm start
-```
+**To enable Google Sign-In:**
 
-**Windows (PowerShell):**
+1. Create a project at [Google Cloud Console](https://console.cloud.google.com/)
+2. Enable Google Sign-In API
+3. Create OAuth 2.0 credentials
+4. Set environment variable:
+   ```bash
+   set GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   npm start
+   ```
 
-```powershell
-$env:NOTESPHERE_USERNAME="myuser"
-$env:NOTESPHERE_PASSWORD="mypass"
-npm start
-```
+#### Option 2: Username/Password Registration
 
-**Linux/Mac:**
+- Create account with username, email, password
+- Passwords are securely hashed with bcrypt (never stored in plain text)
+- Email used for account identification
+- Minimum 6 characters for password
 
-```bash
-export NOTESPHERE_USERNAME=myuser
-export NOTESPHERE_PASSWORD=mypass
-npm start
-```
+### Default Admin Account
 
-### Disable auth (not recommended)
+A default admin account is created automatically:
+
+- **Username:** `admin`
+- **Password:** `admin123`
+
+⚠️ **Important:** Change the admin password after first login or create a new account and delete the admin user.
+
+### User Management
+
+**View registered users:**
+Check `data/users.json` file (passwords are hashed)
+
+**Delete a user:**
+Edit `data/users.json` and remove the user entry, then restart the server
+
+### Disable authentication (not recommended)
 
 ```bash
 set NOTESPHERE_AUTH=0
@@ -167,12 +194,32 @@ npm start
 
 - Make sure the server is running: `npm start` or `node server.js`
 - Check the server log shows: `Auth: enabled`
+- Verify dependencies installed: `npm install`
 
 **Issue: "Invalid credentials"**
 
-- Default username: `admin`
-- Default password: `admin123`
-- Check if you set custom credentials via environment variables
+- For traditional login: Check username and password
+- Default admin: username=`admin`, password=`admin123`
+- Try creating a new account if you forgot credentials
+
+**Issue: "Google Sign-In not working"**
+
+- Google OAuth requires configuration
+- Set `GOOGLE_CLIENT_ID` environment variable
+- See "Authentication Methods" section above for setup instructions
+- Traditional username/password registration always works without Google setup
+
+**Issue: "Username already exists"**
+
+- Choose a different username
+- Each username must be unique
+- Try adding numbers or underscores to your preferred name
+
+**Issue: "Email already registered"**
+
+- An account with this email already exists
+- Try logging in instead of registering
+- Use the "Forgot password" feature (if implemented) or contact admin
 
 **Issue: Infinite redirect loop**
 
